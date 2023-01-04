@@ -66,4 +66,14 @@ class TruckOwner extends UserModel {
       acceptedOrders: List<DocumentReference>.from(snapshot['accepted_orders']),
     );
   }
+
+  factory TruckOwner.fromMap(Map map) {
+    return TruckOwner(
+      type: map['account_type'],
+      email: map['email'],
+      id: map['id'],
+      name: map['name'],
+      acceptedOrders: List<DocumentReference>.from(map['accepted_orders']),
+    );
+  }
 }

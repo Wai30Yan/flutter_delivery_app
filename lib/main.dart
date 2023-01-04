@@ -5,6 +5,7 @@ import 'package:flutter_delivery/auth/auth_wrapper.dart';
 import 'package:flutter_delivery/auth/login.dart';
 import 'package:flutter_delivery/business/business_root.dart';
 import 'package:flutter_delivery/firebase_options.dart';
+import 'package:flutter_delivery/provider/business/b_orders_provider.dart';
 import 'package:flutter_delivery/provider/drivers_provider.dart';
 import 'package:flutter_delivery/provider/orders_provider.dart';
 import 'package:flutter_delivery/truck/truck_root.dart';
@@ -21,6 +22,7 @@ Future<void> main() async {
       ChangeNotifierProvider(create: (context) => AuthFunc(context)),
       ChangeNotifierProvider(create: (context) => OrdersProvider(context)),
       ChangeNotifierProvider(create: (context) => DriverProvider(context)),
+      ChangeNotifierProvider(create: (context) => BOrdersProvider(context)),
     ],
     child: MyApp(),
   ));
@@ -47,5 +49,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-

@@ -21,7 +21,6 @@ class AuthFunc extends ChangeNotifier {
   Future<void> getUserDocument(String uid) async {
     truckRef.doc(uid).get().then((snapshot) {
       if (snapshot.exists) {
-        print('inside AuthFunc: ${snapshot.data().runtimeType}');
         _user = TruckOwner.fromSnapshot(snapshot);
         notifyListeners();
         return;

@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_delivery/auth/auth.dart';
 import 'package:flutter_delivery/models/order_model.dart';
@@ -35,12 +37,8 @@ class DeliveryInfo extends StatelessWidget {
     // OrdersProvider ordersProvider =
     //     Provider.of<OrdersProvider>(context, listen: false);
 
-    DocumentReference<Map<String, dynamic>> orderRef = FirebaseFirestore
-        .instance
-        .collection('business_owners')
-        .doc(order.ownerID)
-        .collection('orders')
-        .doc(orderID);
+    DocumentReference<Map<String, dynamic>> orderRef =
+        FirebaseFirestore.instance.collection('orders').doc(orderID);
 
     driverProvider.getDrivers(user!);
 
@@ -56,10 +54,11 @@ class DeliveryInfo extends StatelessWidget {
       }
     }
 
-    final dd = driverInfo.where((element) => 
-      element['driver'] is DriverModel &&
-      element['driver'].status == true
-    ).toList();
+    final dd = driverInfo
+        .where((element) =>
+            element['driver'] is DriverModel &&
+            element['driver'].status == true)
+        .toList();
 
     print(driverInfo.first);
 
@@ -68,6 +67,7 @@ class DeliveryInfo extends StatelessWidget {
         child: SingleChildScrollView(
           primary: false,
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(
@@ -97,7 +97,6 @@ class DeliveryInfo extends StatelessWidget {
                   ],
                 ),
               ),
-
               ListTile(
                 // ignore: sized_box_for_whitespace
                 leading: Container(
@@ -161,29 +160,43 @@ class DeliveryInfo extends StatelessWidget {
                 title: Text(order.item),
               ),
               SizedBox(
-                height: 320,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  child: GoogleMap(
-                    initialCameraPosition: kInitialPosition,
-                    markers: <Marker>{
-                      Marker(
-                        infoWindow: InfoWindow(
-                            title: 'Pick up address',
-                            snippet:
-                                '${order.fromAddress.street} ${order.fromAddress.city} ${order.fromAddress.state}'),
-                        markerId: const MarkerId('marker1'),
-                        position: pickUpLocation,
-                      ),
-                      Marker(
-                        infoWindow: InfoWindow(
-                            title: 'Drop off address',
-                            snippet:
-                                '${order.toAddress.street} ${order.toAddress.city} ${order.toAddress.state}'),
-                        markerId: const MarkerId('marker2'),
-                        position: dropOfLocation,
-                      ),
-                    },
+                height: 500,
+                child: Card(
+                  elevation: 5,
+                  child: GestureDetector(
+                    onVerticalDragStart: (start) {},
+                    child: GoogleMap(
+                      initialCameraPosition: kInitialPosition,
+                      gestureRecognizers: Set()
+                        ..add(Factory<OneSequenceGestureRecognizer>(
+                            () => EagerGestureRecognizer()))
+                        ..add(Factory<PanGestureRecognizer>(
+                            () => PanGestureRecognizer()))
+                        ..add(Factory<ScaleGestureRecognizer>(
+                            () => ScaleGestureRecognizer()))
+                        ..add(Factory<TapGestureRecognizer>(
+                            () => TapGestureRecognizer()))
+                        ..add(Factory<VerticalDragGestureRecognizer>(
+                            () => VerticalDragGestureRecognizer())),
+                      markers: <Marker>{
+                        Marker(
+                          infoWindow: InfoWindow(
+                              title: 'Pick up address',
+                              snippet:
+                                  '${order.fromAddress.street} ${order.fromAddress.city} ${order.fromAddress.state}'),
+                          markerId: const MarkerId('marker1'),
+                          position: pickUpLocation,
+                        ),
+                        Marker(
+                          infoWindow: InfoWindow(
+                              title: 'Drop off address',
+                              snippet:
+                                  '${order.toAddress.street} ${order.toAddress.city} ${order.toAddress.state}'),
+                          markerId: const MarkerId('marker2'),
+                          position: dropOfLocation,
+                        ),
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -194,91 +207,134 @@ class DeliveryInfo extends StatelessWidget {
                   ? AssignedDriver(
                       driverInfo: assignedDriverInfo,
                     )
-                  :
-                  // const SizedBox(
-                  //   height: 50,
-                  //   child: Center(
-                  // child: Text('You have not assign a driver for this order'),
-                  //   ),
-                  // ),
+                  : Container(),
+              // const SizedBox(
+              //   height: 50,
+              //   child: Center(
+              // child: Text('You have not assign a driver for this order'),
+              //   ),
+              // ),
 
-                  StreamBuilder(
-                      stream: FirebaseFirestore.instance
-                          .collection('business_owners')
-                          .doc(order.ownerID)
-                          .collection('orders')
-                          .doc(orderID)
-                          .snapshots(),
-                      builder: (context, snapshot) {
-                        return ElevatedButton(
-                          onPressed: () {
-                            if (order.accepted && !hasDriver) {
-                              showModalBottomSheet(
-                                  context: context,
-                                  builder: ((context) {
-                                    return SizedBox(
-                                      height: 500,
-                                      child: ListView.builder(
-                                        itemCount: driverInfo.length,
-                                        itemBuilder: (context, index) {
-                                          DriverModel driver =
-                                              driverInfo[index]['driver'];
-
-                                          return GestureDetector(
-                                            onTap: driver.status
-                                                ? null
-                                                : () async {
-                                                    DocumentReference
-                                                        driverRef =
-                                                        driverInfo[index]
-                                                            ['driverRef'];
-                                                    // print(driverRef.id);
-                                                    try {
-                                                      await orderRef.update({
-                                                        'delivery_driver':
-                                                            driverRef,
-                                                      }).then((value) {});
-                                                      await driverRef.update({
-                                                        'status': true,
-                                                        'assign_orders':
-                                                            FieldValue
-                                                                .arrayUnion([
-                                                          orderRef
-                                                        ]),
-                                                      }).then((value) {});
-                                                    } catch (error) {
-                                                      error;
-                                                    }
-                                                  },
-                                            child: ListTile(
-                                              title: Text(
-                                                  driver.driverInfo.name),
-                                              subtitle: Text(
-                                                  '${driver.carType} - ${driver.carNumber}'),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    );
-                                  }));
-                            }
-                            orderRef.update({
-                              'accepted': true,
-                              'truck_owner_ref': truckOwnerRef,
-                            }).then((value) {
-                              truckOwnerRef.update({
-                                'accepted_orders': FieldValue.arrayUnion([
-                                  orderRef,
-                                ]),
-                              });
-                            });
-                          },
-                          child: Text(order.accepted
-                              ? 'Assign a driver'
-                              : 'Take this order'),
+              StreamBuilder(
+                stream: FirebaseFirestore.instance
+                    .collection('orders')
+                    .doc(orderID)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  switch (snapshot.connectionState) {
+                    case (ConnectionState.waiting):
+                      {
+                        return const Center(
+                          child: CircularProgressIndicator(),
                         );
-                      },
-                    ),
+                      }
+
+                    case (ConnectionState.active):
+                      {
+                        Map<String, dynamic> doc = Map.from(
+                            snapshot.data?.data() as Map<String, dynamic>);
+                        final order = OrderModel.fromMap(doc);
+                        if (order.accepted) {
+                          return ElevatedButton(
+                            onPressed: () {},
+                            child: const Text('Assign a driver'),
+                          );
+                        } else {
+                          return ElevatedButton(
+                            onPressed: () {
+                              orderRef.update({
+                                'accepted': true,
+                                'truck_owner_ref': truckOwnerRef,
+                              }).then((value) {
+                                truckOwnerRef.update({
+                                  'accepted_orders': FieldValue.arrayUnion([
+                                    orderRef,
+                                  ]),
+                                });
+                              });
+                            },
+                            child: const Text('Take this order'),
+                          );
+                        }
+                      }
+                    default:
+                      {
+                        return const Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      }
+                  }
+                },
+              ),
+              const SizedBox(
+                height: 15.0,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+  // if (order.accepted && !hasDriver) {
+  //                             showModalBottomSheet(
+  //                                 context: context,
+  //                                 builder: ((context) {
+  //                                   return SizedBox(
+  //                                     height: 500,
+  //                                     child: ListView.builder(
+  //                                       itemCount: driverInfo.length,
+  //                                       itemBuilder: (context, index) {
+  //                                         DriverModel driver =
+  //                                             driverInfo[index]['driver'];
+
+  //                                         return GestureDetector(
+  //                                           onTap: driver.status
+  //                                               ? null
+  //                                               : () async {
+  //                                                   DocumentReference
+  //                                                       driverRef =
+  //                                                       driverInfo[index]
+  //                                                           ['driverRef'];
+  //                                                   // print(driverRef.id);
+  //                                                   try {
+  //                                                     await orderRef.update({
+  //                                                       'delivery_driver':
+  //                                                           driverRef,
+  //                                                     }).then((value) {});
+  //                                                     await driverRef.update({
+  //                                                       'status': true,
+  //                                                       'assign_orders':
+  //                                                           FieldValue
+  //                                                               .arrayUnion(
+  //                                                                   [orderRef]),
+  //                                                     }).then((value) {});
+  //                                                   } catch (error) {
+  //                                                     error;
+  //                                                   }
+  //                                                 },
+  //                                           child: ListTile(
+  //                                             title:
+  //                                                 Text(driver.driverInfo.name),
+  //                                             subtitle: Text(
+  //                                                 '${driver.carType} - ${driver.carNumber}'),
+  //                                           ),
+  //                                         );
+  //                                       },
+  //                                     ),
+  //                                   );
+  //                                 }));
+  //                           }
+
+
+
+
+
+
+
+
 
               // accepted
               //     ? hasDriver
@@ -352,10 +408,3 @@ class DeliveryInfo extends StatelessWidget {
               //         },
               //         child: const Text('Accept this delivery order'),
               //       ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

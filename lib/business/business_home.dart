@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_delivery/auth/auth.dart';
 import 'package:flutter_delivery/business/make_order.dart';
+import 'package:flutter_delivery/models/order_model.dart';
+import 'package:flutter_delivery/provider/business/b_orders_provider.dart';
 import 'package:provider/provider.dart';
 
 class BusinessHome extends StatelessWidget {
@@ -8,6 +10,7 @@ class BusinessHome extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = Provider.of<AuthFunc>(context).userModel;
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -43,6 +46,7 @@ class BusinessHome extends StatelessWidget {
                 ),
               ],
             ),
+           
           ],
         ),
       ),

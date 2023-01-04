@@ -1,8 +1,8 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_delivery/auth/auth.dart';
 import 'package:flutter_delivery/models/user_model.dart';
-import 'package:provider/provider.dart';
 
 import '../models/order_model.dart';
 
@@ -11,22 +11,11 @@ class OrdersProvider extends ChangeNotifier {
   OrdersProvider(this.context);
   String orderID = '';
 
-  init() {
-    fetchOrders(null);
-  }
-
-  Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>>?
-      searchDeliverySnapshot;
-
-  final orderRef =
-      FirebaseFirestore.instance.collection('business_owners').snapshots();
-
-  Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>>?
-      get orderModelStream => searchDeliverySnapshot;
-
   List<OrderModel> acceptedOrdersList = [];
-
   List<OrderModel> get getAcceptedOrderList => acceptedOrdersList;
+
+  List<Map<String, dynamic>> acceptedOrderInfo = [];
+  List<Map<String, dynamic>> get getAcceptedOrderInfo => acceptedOrderInfo;
 
   String get getOrderID => orderID;
 
@@ -54,39 +43,18 @@ class OrdersProvider extends ChangeNotifier {
 
     Map.from(truckOwner as Map<String, dynamic>);
 
-    print(order.item);
-    print(truckOwner['accepted_orders']);
-
     return order;
   }
 
-  void fetchOrders(String? state) async {
-    Stream<List<QuerySnapshot<Map<String, dynamic>>>> ordersSnapshots;
-    if (state != null) {
-      ordersSnapshots = orderRef.asyncMap((snapshot) async {
-        return await Future.wait(snapshot.docs.map((docs) async {
-          return await docs.reference
-              .collection('orders')
-              .where('approved', isEqualTo: true)
-              .where('accepted', isEqualTo: false)
-              .where('to_address.state', isEqualTo: state)
-              .get();
-        }));
-      });
-    } else {
-      ordersSnapshots = orderRef.asyncMap((snapshot) async {
-        return await Future.wait(snapshot.docs.map((docs) async {
-          return await docs.reference
-              .collection('orders')
-              .where('approved', isEqualTo: true)
-              .where('accepted', isEqualTo: false)
-              .get();
-        }));
-      });
-    }
+  StreamSubscription<QuerySnapshot<Object?>> fetchOrders(String? state) {
+    final CollectionReference ordersCollection =
+        FirebaseFirestore.instance.collection('orders');
 
-    searchDeliverySnapshot = ordersSnapshots.map(
-        (snapshots) => snapshots.expand((snapshot) => snapshot.docs).toList());
+    final orders = ordersCollection.snapshots().listen((snapshot) {
+      snapshot.docs.forEach((doc) => print(doc.data));
+    });
+
+    return orders;
   }
 
   Future<List<dynamic>> getAcceptedOrders(UserModel user) async {
@@ -103,6 +71,10 @@ class OrdersProvider extends ChangeNotifier {
       DocumentSnapshot snapshot = await docRef.get();
       orderID = snapshot.id;
       final order = OrderModel.fromSnapshot(snapshot);
+      acceptedOrderInfo.add({
+        'order': order,
+        'orderRef': docRef,
+      });
       return order;
     }).toList());
 

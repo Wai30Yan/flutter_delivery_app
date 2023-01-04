@@ -25,6 +25,16 @@ class TruckHome extends StatelessWidget {
     final numOfDrivers = driverProvider.getAllDriversInfo;
     final orderID = ordersProvider.getOrderID;
 
+    final orderInfo = ordersProvider.getAcceptedOrderInfo;
+
+    for (int i = 0; i < orderInfo.length; i++) {
+      OrderModel order = orderInfo[i]['order'];
+      if (order.truckOwnerRef != null) {
+        print(order);
+        print('order is: ${orderInfo[i]['order'].item}');
+        print('orderRef is: ${orderInfo[i]['orderRef']}');
+      }
+    }
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -203,9 +213,7 @@ class TruckHome extends StatelessWidget {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     IconButton(
-                                      onPressed: () {
-                                        
-                                      },
+                                      onPressed: () {},
                                       icon: Icon(
                                         Icons.delete,
                                         color: Colors.red[400],

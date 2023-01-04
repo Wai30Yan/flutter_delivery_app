@@ -31,7 +31,6 @@ class _MakeOrderState extends State<MakeOrder> {
     final userRef =
         FirebaseFirestore.instance.collection('business_owners').doc(user!.id);
 
-
     return SafeArea(
       child: Scaffold(
         body: Form(
@@ -91,13 +90,28 @@ class _MakeOrderState extends State<MakeOrder> {
                      *   to firebase data model, I left this 
                      *   like this for now cuz it's still in development stage
                      */
-                    // "name": nameController.text,
-                    // "phone": phoneController.text,
-                    // "address": addressController.text,
-                    // "order": itemController.text,
-                    // "approved": approval,
-                    // "accepted": accepted,
-                    // "truck_owner_id": null,
+                    "name": user.name,
+                    "phone": phoneController.text,
+                    "item": itemController.text,
+                    "owner_id": user.id,
+                    "approved": approval,
+                    "accepted": accepted,
+                    "truck_owner_ref": null,
+                    "delivery_driver": null,
+                    "to_address": {
+                      "city": '',
+                      "street": '',
+                      "state": '',
+                      "zip": '',
+                      "coordinated": GeoPoint(123, 43),
+                    },
+                    "from_address": {
+                      "city": '',
+                      "street": '',
+                      "state": '',
+                      "zip": '',
+                      "coordinated": GeoPoint(123, 43),
+                    }
                   };
                   for (var k in data.keys) {
                     if (data[k] == "") {
